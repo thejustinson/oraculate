@@ -5,10 +5,9 @@ const useCryptoIcon = (cryptoSymbol: string) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Construct the icon URL
   const url = `https://assets.coincap.io/assets/icons/${cryptoSymbol.toLowerCase()}@2x.png`;
 
-  // Check if the image exists (optional)
+  // Check if the image exists
   const checkImage = () => {
     const img = new Image();
     img.onload = () => setIconUrl(url);
