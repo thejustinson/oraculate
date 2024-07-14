@@ -1,28 +1,24 @@
-// src/hooks/usePythPriceFeed.tsx
 import { useState, useEffect, useRef } from 'react';
 import { PriceServiceConnection, PriceFeed } from '@pythnetwork/price-service-client';
 
-interface UsePythPriceFeedOptions {
-  endpoint: string;
-  priceFeedIds: string[];
-}
+const PYTH_ENDPOINT = 'https://hermes.pyth.network';
 
-const usePythPriceFeed = ({ endpoint, priceFeedIds }: UsePythPriceFeedOptions) => {
-  const [priceFeeds, setPriceFeeds] = useState<PriceFeed[]>([]);
+const usePythPriceFeed = (priceFeedId: string) => {
+  const [priceFeed, setPriceFeed] = useState<PriceFeed | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<PriceServiceConnection | null>(null);
 
   useEffect(() => {
-    const fetchPriceFeeds = async () => {
+    const fetchPriceFeed = async () => {
       try {
-        const connection = new PriceServiceConnection(endpoint);
+        const connection = new PriceServiceConnection(PYTH_ENDPOINT);
         connectionRef.current = connection;
-        const priceData = await connection.getLatestPriceFeeds(priceFeedIds);
-        if (priceData) {
-          setPriceFeeds(priceData);
+        const priceData = await connection.getLatestPriceFeeds([priceFeedId]);
+        if (priceData && priceData.length > 0) {
+          setPriceFeed(priceData[0]);
         } else {
-          setError('Failed to fetch price feeds.');
+          setError('Failed to fetch price feed.');
         }
       } catch (err) {
         setError((err as Error).message);
@@ -31,33 +27,24 @@ const usePythPriceFeed = ({ endpoint, priceFeedIds }: UsePythPriceFeedOptions) =
       }
     };
 
-    fetchPriceFeeds();
+    fetchPriceFeed();
 
     return () => {
-      // Clean up the WebSocket connection when the component is unmounted
       if (connectionRef.current) {
         connectionRef.current.closeWebSocket();
       }
     };
-  }, [endpoint, priceFeedIds]);
+  }, [priceFeedId]);
 
   useEffect(() => {
     if (connectionRef.current) {
-      connectionRef.current.subscribePriceFeedUpdates(priceFeedIds, (priceFeed) => {
-        setPriceFeeds((prevPriceFeeds) => {
-          const index = prevPriceFeeds.findIndex((pf) => pf.id === priceFeed.id);
-          if (index !== -1) {
-            const updatedPriceFeeds = [...prevPriceFeeds];
-            updatedPriceFeeds[index] = priceFeed;
-            return updatedPriceFeeds;
-          }
-          return [...prevPriceFeeds, priceFeed];
-        });
+      connectionRef.current.subscribePriceFeedUpdates([priceFeedId], (updatedPriceFeed) => {
+        setPriceFeed(updatedPriceFeed);
       });
     }
-  }, [priceFeedIds]);
+  }, [priceFeedId]);
 
-  return { priceFeeds, loading, error };
+  return { priceFeed, loading, error };
 };
 
 export default usePythPriceFeed;
