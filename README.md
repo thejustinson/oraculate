@@ -1,4 +1,4 @@
-# Crypto Price Aggregator
+# Oraculate
 
 This project is a React-based web application designed to aggregate and display real-time cryptocurrency prices from multiple sources. The application uses custom hooks to fetch price data from DIA and Pyth Network, then calculates and displays an aggregate price.
 
